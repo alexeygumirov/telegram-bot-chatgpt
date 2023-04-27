@@ -10,13 +10,6 @@ COPY app/. /app
 # Install any needed packages specified in requirements.txt
 RUN pip install --trusted-host pypi.python.org -r requirements.txt
 
-# Make port 80 available to the world outside this container
-# EXPOSE 80
-
-# Define environment variable
-# ENV TELEGRAM_API_TOKEN your_telegram_api_token
-# ENV CHATGPT_API_KEY your_chatgpt_api_key
-
 # Run telegram_bot.py when the container launches
 CMD ["python", "telegram_bot.py"]
 
