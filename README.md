@@ -15,7 +15,7 @@ Bot is written in Python and is tested with the Python 3.10.
 - CHATGPT_API_KEY: your ChatGPT API key. This parameter must be provided.
 - GPT_MODEL: Which GPT model is going to be used for completion. Default model is "gpt-3.5-turbo".
     - To get list of models look into the documentation: [OpenAI documentation](https://platform.openai.com/docs/api-reference/models/list)
-- ALLOWED_CHAT_IDS=<comma separated list of allowed account IDs>
+- ALLOWED_CHAT_IDS: Comma separated list of allowed account IDs.
     - When no parameter is defined, then bot operated as public.
     - When list of account IDs is given, bot communicates only with them.
     - To get ID of Telegram account, use **@userinfobot**: forward to it message from the account you want to get ID from.

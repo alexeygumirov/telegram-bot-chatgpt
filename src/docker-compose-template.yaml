@@ -11,6 +11,6 @@ services:
       - TELEGRAM_API_TOKEN=your_telegram_api_token
       - CHATGPT_API_KEY=your_chatgpt_api_key
       - GPT_MODEL=gpt-3.5-turbo
-      # - ALLOWED_CHAT_IDS=<comma separated list of allowed account IDs>
+      # - ALLOWED_CHAT_IDS=123445566,95848449884
       - CHAT_HISTORY_SIZE=20
       - MAX_TOKENS=500
