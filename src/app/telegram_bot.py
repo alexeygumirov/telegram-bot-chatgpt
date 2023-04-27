@@ -84,7 +84,7 @@ async def help_command(message: types.Message):
         "/help - Show this help message\n"
         "/info - Get information about the bot\n"
         "/status - Check the bot's status\n"
-        "/new_topic - Clear ChatGPT conversation history"
+        "/newtopic - Clear ChatGPT conversation history"
     )
     await message.reply(help_text)
 
@@ -105,7 +105,7 @@ async def status_command(message: types.Message):
     await message.reply(status_text)
 
 
-@dp.message_handler(commands=['new_topic'])
+@dp.message_handler(commands=['newtopic'])
 async def status_command(message: types.Message):
     if not await is_allowed(message.from_user.id):
         return  # Ignore the message if the user is not allowed

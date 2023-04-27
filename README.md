@@ -19,7 +19,7 @@ Bot is written in Python and is tested with the Python 3.10.
     - When no parameter is defined, then bot operated as public.
     - When list of account IDs is given, bot communicates only with them.
     - To get ID of Telegram account, use **@userinfobot**: forward to it message from the account you want to get ID from.
-- CHAT_HISTORY_SIZE: default value is 20 - it means that chat history will keep 10 messages of user and 10 answers from ChatGPT. You can setup your
+- CHAT_HISTORY_SIZE: default value is 20 - it means that chat history will keep 10 messages of user and 10 answers from ChatGPT. Don't make history too large, it might not be fully processed due to exhausture of max_tokens limit. 
 - MAX_TOKENS: The maximum number of tokens to generate in the chat completion. The total length of input tokens and generated tokens is limited by the model's context length. Default value is 500. Maximum possible value is 4096. If you try to set value higher, program will set it to 4096.
 
 ## Building and running
@@ -37,3 +37,11 @@ Bot is written in Python and is tested with the Python 3.10.
 4. In the `docker-compose.yaml` file set values for: TELEGRAM_API_TOKEN and CHATGPT_API_KEY. If you want private bot, also provide list of comma separated account IDs.
 5. Check that your docker-compose file is correct: `docker-compose config`.
 6. If no errors are found, run in the same directory: `docker-compose up -d`.
+
+## Bot commands
+
+- **/start**: Start the bot
+- **/help**:  Show help message with commands
+- **/info**: Get information about the bot
+- **/status**: Check the bot's status
+- **/newtopic**: Clear ChatGPT conversation history
