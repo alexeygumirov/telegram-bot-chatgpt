@@ -14,22 +14,20 @@ CHATGPT_API_KEY = os.getenv("CHATGPT_API_KEY")
 GPT_MODEL = os.getenv("GPT_MODEL", "gpt-3.5-turbo")
 MAX_TOKENS = min(int(os.getenv("MAX_TOKENS", 500)), 4096)
 
-# If comma separated list of chat IDs is provided, the bot will only work in those chats
-# If not provided, the bot will work in all chats
 if os.getenv("ALLOWED_CHAT_IDS"):
     ALLOWED_CHAT_IDS = [int(chat_id) for chat_id in os.getenv("ALLOWED_CHAT_IDS").split(",")]
     IS_PUBLIC = False
 else:
     ALLOWED_CHAT_IDS = []
     IS_PUBLIC = True
-
 if os.getenv("CHAT_HISTORY_SIZE"):
     CHAT_HISTORY_SIZE = int(os.getenv("CHAT_HISTORY_SIZE"))
 else:
     CHAT_HISTORY_SIZE = 20
 
-chat_history = {}
+
 # Create dictionary to keep track of chat IDs and messages history
+chat_history = {}
 
 
 def add_message(chat_id, message):
@@ -58,6 +56,10 @@ async def is_allowed(user_id: int) -> bool:
         return True
     return IS_PUBLIC
 
+
+async def send_typing_indicator(chat_id: int):
+    await bot.send_chat_action(chat_id, action="typing")
+
 # Command handlers
 
 
@@ -71,7 +73,7 @@ async def on_start(message: types.Message):
 async def start(message: types.Message):
     if not await is_allowed(message.from_user.id):
         return  # Ignore the message if the user is not allowed
-    await message.reply(f"Hello! I'm a ChatGPT bot.\nI am using {GPT_MODEL}.\nSend me a message or a command, and I'll respond!")
+    await message.answer(f"Hello! I'm a ChatGPT bot.\nI am using {GPT_MODEL}.\nSend me a message or a command, and I'll respond!")
 
 
 @dp.message_handler(commands=['help'])
@@ -86,7 +88,7 @@ async def help_command(message: types.Message):
         "/status - Check the bot's status\n"
         "/newtopic - Clear ChatGPT conversation history"
     )
-    await message.reply(help_text)
+    await message.answer(help_text)
 
 
 @dp.message_handler(commands=['info'])
@@ -94,7 +96,7 @@ async def info_command(message: types.Message):
     if not await is_allowed(message.from_user.id):
         return  # Ignore the message if the user is not allowed
     info_text = f"I'm a ChatGPT bot.\nI am using {GPT_MODEL}.\nI can respond to your messages and a few basic commands."
-    await message.reply(info_text)
+    await message.answer(info_text)
 
 
 @dp.message_handler(commands=['status'])
@@ -102,7 +104,7 @@ async def status_command(message: types.Message):
     if not await is_allowed(message.from_user.id):
         return  # Ignore the message if the user is not allowed
     status_text = "I'm currently up and running!"
-    await message.reply(status_text)
+    await message.answer(status_text)
 
 
 @dp.message_handler(commands=['newtopic'])
@@ -111,7 +113,7 @@ async def status_command(message: types.Message):
         return  # Ignore the message if the user is not allowed
     clean_history(message.chat.id)
     status_text = "ChatGPT conversation history is cleared!"
-    await message.reply(status_text)
+    await message.answer(status_text)
 
 
 @dp.message_handler(content_types=types.ContentTypes.NEW_CHAT_MEMBERS)
@@ -134,6 +136,7 @@ async def reply(message: types.Message):
         return  # Ignore the message if the user is not allowed
     input_text = message.text
     add_message(message.chat.id, {"role": "user", "content": input_text})
+    await send_typing_indicator(message.chat.id)
     response_text = await chatgpt_request(chat_history[message.chat.id])
     await message.reply(response_text)
     add_message(message.chat.id, {"role": "assistant", "content": response_text})
@@ -151,6 +154,10 @@ async def chatgpt_request(messages_history):
         "max_tokens": MAX_TOKENS,
         "messages": messages_history
     }
+    # data = {
+    #     "prompt": prompt,
+    #     "max_tokens": 50,
+    # }
 
     async with aiohttp.ClientSession() as session:
         async with session.post("https://api.openai.com/v1/chat/completions", headers=headers, json=data) as response:  # Change the URL to use gpt-3.5-turbo
