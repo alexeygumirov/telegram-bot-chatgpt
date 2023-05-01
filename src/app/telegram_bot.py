@@ -14,12 +14,15 @@ CHATGPT_API_KEY = os.getenv("CHATGPT_API_KEY")
 GPT_MODEL = os.getenv("GPT_MODEL", "gpt-3.5-turbo")
 MAX_TOKENS = min(int(os.getenv("MAX_TOKENS", 500)), 4096)
 
+# If comma separated list of chat IDs is provided, the bot will only work in those chats
+# If not provided, the bot will work in all chats
 if os.getenv("ALLOWED_CHAT_IDS"):
     ALLOWED_CHAT_IDS = [int(chat_id) for chat_id in os.getenv("ALLOWED_CHAT_IDS").split(",")]
     IS_PUBLIC = False
 else:
     ALLOWED_CHAT_IDS = []
     IS_PUBLIC = True
+
 if os.getenv("CHAT_HISTORY_SIZE"):
     CHAT_HISTORY_SIZE = int(os.getenv("CHAT_HISTORY_SIZE"))
 else:
@@ -86,7 +89,8 @@ async def help_command(message: types.Message):
         "/help - Show this help message\n"
         "/info - Get information about the bot\n"
         "/status - Check the bot's status\n"
-        "/newtopic - Clear ChatGPT conversation history"
+        "/newtopic - Clear ChatGPT conversation history\n"
+        "/regenerate - Regenerate ChatGPT response on the last query"
     )
     await message.answer(help_text)
 
@@ -108,12 +112,24 @@ async def status_command(message: types.Message):
 
 
 @dp.message_handler(commands=['newtopic'])
-async def status_command(message: types.Message):
+async def newtopic_command(message: types.Message):
     if not await is_allowed(message.from_user.id):
         return  # Ignore the message if the user is not allowed
     clean_history(message.chat.id)
     status_text = "ChatGPT conversation history is cleared!"
     await message.answer(status_text)
+
+
+@dp.message_handler(commands=['regenerate'])
+async def regenerate_command(message: types.Message):
+    if not await is_allowed(message.from_user.id):
+        return  # Ignore the message if the user is not allowed
+    if chat_history.get(message.chat.id):
+        chat_history[message.chat.id].pop()
+    await send_typing_indicator(message.chat.id)
+    response_text = await chatgpt_request(chat_history[message.chat.id])
+    await message.answer(f"Generating new respose on your query:\n<i><b>{chat_history[message.chat.id][-1]['content']}</b></i>\n\n{response_text}", parse_mode="HTML")
+    add_message(message.chat.id, {"role": "assistant", "content": response_text})
 
 
 @dp.message_handler(content_types=types.ContentTypes.NEW_CHAT_MEMBERS)
@@ -154,10 +170,6 @@ async def chatgpt_request(messages_history):
         "max_tokens": MAX_TOKENS,
         "messages": messages_history
     }
-    # data = {
-    #     "prompt": prompt,
-    #     "max_tokens": 50,
-    # }
 
     async with aiohttp.ClientSession() as session:
         async with session.post("https://api.openai.com/v1/chat/completions", headers=headers, json=data) as response:  # Change the URL to use gpt-3.5-turbo

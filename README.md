@@ -45,3 +45,4 @@ Bot is written in Python and is tested with the Python 3.10.
 - **/info**: Get information about the bot
 - **/status**: Check the bot's status
 - **/newtopic**: Clear ChatGPT conversation history
+- **/regenerate**: Regenerate ChatGPT response on the last query
