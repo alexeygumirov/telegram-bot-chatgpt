@@ -3,14 +3,15 @@ version: '3.8'
 
 services:
   telegram_bot:
-    build: .
     image: telegram_bot:latest
     container_name: telegram-bot
     restart: always
     environment:
       - TELEGRAM_API_TOKEN=your_telegram_api_token
-      - CHATGPT_API_KEY=your_chatgpt_api_key
-      - GPT_MODEL=gpt-3.5-turbo
-      # - ALLOWED_CHAT_IDS=123445566,95848449884
-      - CHAT_HISTORY_SIZE=20
+      - OPENAI_API_KEY=your_chatgpt_api_key
+      - GPT_CHAT_MODEL=gpt-3.5-turbo
+      - GPT_COMPLETION_MODEL=text-davinci-003
+      - ALLOWED_CHAT_IDS=784225869,759334828 # comma separated list, no spaces
       - MAX_TOKENS=500
+      - CHAT_HISTORY_SIZE=20 # maximum allowed value is 50
+      - NUM_SEARCH_RESULTS=3 # max is 10

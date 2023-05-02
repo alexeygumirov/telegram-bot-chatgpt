@@ -3,6 +3,10 @@
 My telegram bot for ChatGPT (written with the help of ChatGPT)
 Bot is written in Python and is tested with the Python 3.10. 
 
+Bot supports:
+- Chat mode via GPT Chat Completion API
+- Web search mode: Web search results from Duckduckgo engine are completed via GPT Compltion API
+
 ## Preparations
 
 1. Create Telegram bot and get bot token:
@@ -12,15 +16,26 @@ Bot is written in Python and is tested with the Python 3.10.
 ## Parameters
 
 - TELEGRAM_API_TOKEN: your Telegram bot token. This parameter must be provided.
-- CHATGPT_API_KEY: your ChatGPT API key. This parameter must be provided.
-- GPT_MODEL: Which GPT model is going to be used for completion. Default model is "gpt-3.5-turbo".
+- OPENAI_API_KEY: your ChatGPT API key. This parameter must be provided.
+- GPT_CHAT_MODEL: Which GPT model is going to be used for chat completion.
     - To get list of models look into the documentation: [OpenAI documentation](https://platform.openai.com/docs/api-reference/models/list)
+    - Default model: "gpt-3.5-turbo".
+- GPT_COMPLETION_MODEL: Which GPT model is going to be used for text completion.
+    - To get list of models look into the documentation: [OpenAI documentation](https://platform.openai.com/docs/api-reference/models/list)
+    - Default model: "text-davinci-003".
 - ALLOWED_CHAT_IDS: Comma separated list of allowed account IDs.
     - When no parameter is defined, then bot operated as public.
     - When list of account IDs is given, bot communicates only with them.
     - To get ID of Telegram account, use **@userinfobot**: forward to it message from the account you want to get ID from.
-- CHAT_HISTORY_SIZE: default value is 20 - it means that chat history will keep 10 messages of user and 10 answers from ChatGPT. Don't make history too large, it might not be fully processed due to exhausture of max_tokens limit. 
-- MAX_TOKENS: The maximum number of tokens to generate in the chat completion. The total length of input tokens and generated tokens is limited by the model's context length. Default value is 500. Maximum possible value is 4096. If you try to set value higher, program will set it to 4096.
+- CHAT_HISTORY_SIZE: How many chat messages are going to be stored. If set to 10, it means it will keep 5 messages of user and 5 answers from ChatGPT. Don't make history too large, it might not be fully processed due to exhausture of max_tokens limit. 
+    - Default value: 20
+    - Max value: 50
+- MAX_TOKENS: The maximum number of tokens to generate in the chat completion. The total length of input tokens and generated tokens is limited by the model's context length.
+    - Default value: 500
+    - Max value: 4096
+- NUM_SEARCH_RESULTS: Maximum number of Duckduckgo search results used as input for completion.
+    - Default value: 3
+    - Max value: 10
 
 ## Building and running
 
@@ -45,4 +60,6 @@ Bot is written in Python and is tested with the Python 3.10.
 - **/info**: Get information about the bot
 - **/status**: Check the bot's status
 - **/newtopic**: Clear ChatGPT conversation history
-- **/regenerate**: Regenerate ChatGPT response on the last query
+- **/regen**: Regenerate ChatGPT response on the last query
+- **/web `<query>`**: Search with Duckduckgo and process results with ChatGPT using `<query>`
+- **/webregen**: Regenerate GPT response on the last web search

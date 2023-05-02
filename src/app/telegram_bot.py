@@ -2,17 +2,22 @@ import os
 import logging
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
-# from aiogram.types import ParseMode
+from aiogram.types import ParseMode
 from aiogram.utils import executor
-import aiohttp
 from dotenv import load_dotenv
+import openai
+import duckduckgo as DDG
 
 # Load environment variables
 load_dotenv()
+openai.api_key = os.getenv("OPENAI_API_KEY")
+OPENAI_MAX_TOKENS = 4096
 TELEGRAM_API_TOKEN = os.getenv("TELEGRAM_API_TOKEN")
-CHATGPT_API_KEY = os.getenv("CHATGPT_API_KEY")
-GPT_MODEL = os.getenv("GPT_MODEL", "gpt-3.5-turbo")
+GPT_CHAT_MODEL = os.getenv("GPT_CHAT_MODEL", "gpt-3.5-turbo")
+GPT_COMPLETION_MODEL = os.getenv("GPT_COMPLETION_MODEL", "text-davinci-003")
+CHAT_HISTORY_SIZE = min(int(os.getenv("CHAT_HISTORY_SIZE", 20)), 50)
 MAX_TOKENS = min(int(os.getenv("MAX_TOKENS", 500)), 4096)
+NUM_SEARCH_RESULTS = min(int(os.getenv("NUM_SEARCH_RESULTS", 3)), 10)
 
 # If comma separated list of chat IDs is provided, the bot will only work in those chats
 # If not provided, the bot will work in all chats
@@ -23,17 +28,15 @@ else:
     ALLOWED_CHAT_IDS = []
     IS_PUBLIC = True
 
-if os.getenv("CHAT_HISTORY_SIZE"):
-    CHAT_HISTORY_SIZE = int(os.getenv("CHAT_HISTORY_SIZE"))
-else:
-    CHAT_HISTORY_SIZE = 20
-
 
 # Create dictionary to keep track of chat IDs and messages history
 chat_history = {}
+# Dictionary to keep track of web search chat_history
+# It only keeps last prompt and last response (text)
+web_search_history = {}
 
 
-def add_message(chat_id, message):
+def add_chat_message(chat_id, message):
     if chat_id not in chat_history:
         chat_history[chat_id] = []
     chat_history[chat_id].append(message)
@@ -41,7 +44,7 @@ def add_message(chat_id, message):
         chat_history[chat_id].pop(0)
 
 
-def clean_history(chat_id):
+def clean_chat_history(chat_id):
     chat_history[chat_id] = []
 
 
@@ -90,7 +93,9 @@ async def help_command(message: types.Message):
         "/info - Get information about the bot\n"
         "/status - Check the bot's status\n"
         "/newtopic - Clear ChatGPT conversation history\n"
-        "/regenerate - Regenerate ChatGPT response on the last query"
+        "/regen - Regenerate last GPT response\n"
+        "/web <query> - Search with Duckduckgo and process results with ChatGPT using query\n"
+        "/webregen - Regenerate GPT response on the last web search"
     )
     await message.answer(help_text)
 
@@ -115,24 +120,62 @@ async def status_command(message: types.Message):
 async def newtopic_command(message: types.Message):
     if not await is_allowed(message.from_user.id):
         return  # Ignore the message if the user is not allowed
-    clean_history(message.chat.id)
+    clean_chat_history(message.chat.id)
     status_text = "ChatGPT conversation history is cleared!"
     await message.answer(status_text)
 
 
-@dp.message_handler(commands=['regenerate'])
+@dp.message_handler(commands=['regen'])
 async def regenerate_command(message: types.Message):
     if not await is_allowed(message.from_user.id):
         return  # Ignore the message if the user is not allowed
     if chat_history.get(message.chat.id):
         chat_history[message.chat.id].pop()
     await send_typing_indicator(message.chat.id)
-    response_text = await chatgpt_request(chat_history[message.chat.id])
-    await message.answer(f"Generating new respose on your query:\n<i><b>{chat_history[message.chat.id][-1]['content']}</b></i>\n\n{response_text}", parse_mode="HTML")
-    add_message(message.chat.id, {"role": "assistant", "content": response_text})
+    regen_message = await message.answer("Generating new answer…")
+    response_text = await chatgpt_chat_completion_request(chat_history[message.chat.id])
+    await regen_message.delete()
+    await message.answer(f"Generating new respose on your query:\n<i><b>{chat_history[message.chat.id][-1]['content']}</b></i>\n\n{response_text}", parse_mode=ParseMode.HTML)
+    add_chat_message(message.chat.id, {"role": "assistant", "content": response_text})
 
 
-@dp.message_handler(content_types=types.ContentTypes.NEW_CHAT_MEMBERS)
+@dp.message_handler(commands=['web'])
+async def websearch_command(message: types.Message):
+    if not await is_allowed(message.from_user.id):
+        return
+    query = message.get_args()
+    search_message = await message.answer("Searching…")
+    await send_typing_indicator(message.chat.id)
+    web_search_result, result_status = await DDG.web_search(query, NUM_SEARCH_RESULTS)
+    if result_status == "OK":
+        chat_gpt_instruction = 'Instructions: Using the provided web search results, write a comprehensive reply to the given query. Make sure to cite results using [number] notation after the reference. If the provided search results refer to multiple subjects with the same name, write separate anwers for each subject. In the end of answer provide a list of all used URLs.'
+        input_text = web_search_result + "\n\n" + chat_gpt_instruction + "\n\n" + "Query: " + query + "\n"
+        web_search_history['prompt'] = input_text
+        await send_typing_indicator(message.chat.id)
+        response_text = await chatgpt_completion_request(input_text)
+    if result_status == "ERROR":
+        response_text = web_search_result
+    await search_message.delete()
+    await message.answer(response_text)
+    web_search_history['text'] = response_text
+
+
+@dp.message_handler(commands=['webregen'])
+async def web_regenerate_command(message: types.Message):
+    if not await is_allowed(message.from_user.id):
+        return  # Ignore the message if the user is not allowed
+    if not web_search_history.get('prompt'):
+        await message.answer("You need to do web search first! Use '/web <query>' command.")
+        return
+    await send_typing_indicator(message.chat.id)
+    regen_message = await message.answer("Generating new answer…")
+    response_text = await chatgpt_completion_request(web_search_history['prompt'])
+    await regen_message.delete()
+    await message.answer(response_text)
+    web_search_history['text'] = response_text
+
+
+@ dp.message_handler(content_types=types.ContentTypes.NEW_CHAT_MEMBERS)
 async def new_chat_member_handler(message: types.Message):
     if not await is_allowed(message.from_user.id):
         return  # Ignore the message if the user is not allowed
@@ -146,36 +189,42 @@ async def new_chat_member_handler(message: types.Message):
 # Message handlers
 
 
-@dp.message_handler()
+@ dp.message_handler()
 async def reply(message: types.Message):
     if not await is_allowed(message.from_user.id):
         return  # Ignore the message if the user is not allowed
     input_text = message.text
-    add_message(message.chat.id, {"role": "user", "content": input_text})
+    add_chat_message(message.chat.id, {"role": "user", "content": input_text})
     await send_typing_indicator(message.chat.id)
-    response_text = await chatgpt_request(chat_history[message.chat.id])
+    response_text = await chatgpt_chat_completion_request(chat_history[message.chat.id])
     await message.reply(response_text)
-    add_message(message.chat.id, {"role": "assistant", "content": response_text})
+    add_chat_message(message.chat.id, {"role": "assistant", "content": response_text})
 
 
-async def chatgpt_request(messages_history):
-    headers = {
-        "Authorization": f"Bearer {CHATGPT_API_KEY}",
-    }
+async def chatgpt_chat_completion_request(messages_history):
+    response = openai.ChatCompletion.create(
+        model=GPT_CHAT_MODEL,
+        temperature=0.7,
+        top_p=0.9,
+        max_tokens=MAX_TOKENS,
+        messages=messages_history
+    )
 
-    data = {
-        "model": "gpt-3.5-turbo",
-        "temperature": 0.7,
-        "top_p": 0.9,
-        "max_tokens": MAX_TOKENS,
-        "messages": messages_history
-    }
+    return response.choices[0].message.content.strip()
 
-    async with aiohttp.ClientSession() as session:
-        async with session.post("https://api.openai.com/v1/chat/completions", headers=headers, json=data) as response:  # Change the URL to use gpt-3.5-turbo
-            response.raise_for_status()
-            result = await response.json()
-    return result["choices"][0]["message"]["content"].strip()
+
+async def chatgpt_completion_request(prompt):
+    tokens = OPENAI_MAX_TOKENS // 2 - len(prompt.split())
+    response = openai.Completion.create(
+        model=GPT_COMPLETION_MODEL,
+        prompt=prompt,
+        temperature=0.7,
+        max_tokens=tokens,
+        top_p=0.9
+    )
+
+    return response.choices[0].text.strip()
+
 
 if __name__ == "__main__":
     from aiogram import executor
