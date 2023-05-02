@@ -16,6 +16,7 @@ async def web_search(query: str, num_search_results: int = 5):
 
     search_result = "Web search results:\n\n"
     for i in range(min(num_search_results, len(results_filtered))):
-        search_result += f"[{i}]: " + results_filtered[i]['body'] + "…" + f"\nURL: {results_filtered[i]['href']}\n"
+        # In prompt text list of URLs shall start from 1, not 0
+        search_result += f"[{i+1}]: " + results_filtered[i]['body'] + "…" + f"\nURL: {results_filtered[i]['href']}\n"
 
     return search_result, "OK"
