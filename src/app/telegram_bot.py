@@ -48,6 +48,24 @@ def clean_chat_history(chat_id):
     chat_history[chat_id] = []
 
 
+def add_web_search_message(chat_id, message, completion_role):
+    if chat_id not in web_search_history:
+        web_search_history[chat_id] = {}
+    if completion_role == "prompt":
+        web_search_history[chat_id]["prompt"] = message
+    elif completion_role == "text":
+        web_search_history[chat_id]["text"] = message
+
+
+def clean_web_search_history(chat_id, completion_role: str = "all"):
+    if completion_role == "all":
+        web_search_history[chat_id] = {}
+    if completion_role == "prompt":
+        web_search_history[chat_id]['prompt'] = ""
+    if completion_role == "text":
+        web_search_history[chat_id]['text'] = ""
+
+
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 
@@ -150,14 +168,14 @@ async def websearch_command(message: types.Message):
     if result_status == "OK":
         chat_gpt_instruction = 'Instructions: Using the provided web search results, write a comprehensive reply to the given query. Make sure to cite results using [number] notation after the reference. If the provided search results refer to multiple subjects with the same name, write separate anwers for each subject. In the end of answer provide a list of all used URLs.'
         input_text = web_search_result + "\n\n" + chat_gpt_instruction + "\n\n" + "Query: " + query + "\n"
-        web_search_history['prompt'] = input_text
+        add_web_search_message(message.chat.id, input_text, "prompt")
         await send_typing_indicator(message.chat.id)
         response_text = await chatgpt_completion_request(input_text)
+        add_web_search_message(message.chat.id, response_text, "text")
     if result_status == "ERROR":
         response_text = web_search_result
     await search_message.delete()
     await message.answer(response_text)
-    web_search_history['text'] = response_text
 
 
 @dp.message_handler(commands=['webregen'])
@@ -167,12 +185,12 @@ async def web_regenerate_command(message: types.Message):
     if not web_search_history.get('prompt'):
         await message.answer("You need to do web search first! Use '/web <query>' command.")
         return
-    await send_typing_indicator(message.chat.id)
     regen_message = await message.answer("Generating new answer…")
-    response_text = await chatgpt_completion_request(web_search_history['prompt'])
+    await send_typing_indicator(message.chat.id)
+    response_text = await chatgpt_completion_request(web_search_history[message.chat.id]['prompt'])
     await regen_message.delete()
     await message.answer(response_text)
-    web_search_history['text'] = response_text
+    add_web_search_message(message.chat.id, response_text, "text")
 
 
 @ dp.message_handler(content_types=types.ContentTypes.NEW_CHAT_MEMBERS)
