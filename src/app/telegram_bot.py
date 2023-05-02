@@ -182,7 +182,10 @@ async def websearch_command(message: types.Message):
 async def web_regenerate_command(message: types.Message):
     if not await is_allowed(message.from_user.id):
         return  # Ignore the message if the user is not allowed
-    if not web_search_history.get('prompt'):
+    if not web_search_history.get(message.chat.id):
+        await message.answer("You need to do web search first! Use '/web <query>' command.")
+        return
+    if not web_search_history[message.chat.id].get('prompt'):
         await message.answer("You need to do web search first! Use '/web <query>' command.")
         return
     regen_message = await message.answer("Generating new answer…")
