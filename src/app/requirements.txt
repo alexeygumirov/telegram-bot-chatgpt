@@ -2,4 +2,4 @@ python-telegram-bot[all]==20.2
 python-dotenv==1.0.0
 aiogram==2.25.1
 openai==0.27.6
-duckduckgo-search==2.9.1
+duckduckgo-search==2.9.5
