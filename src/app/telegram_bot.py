@@ -223,28 +223,36 @@ async def reply(message: types.Message):
 
 
 async def chatgpt_chat_completion_request(messages_history):
-    response = openai.ChatCompletion.create(
-        model=GPT_CHAT_MODEL,
-        temperature=0.7,
-        top_p=0.9,
-        max_tokens=MAX_TOKENS,
-        messages=messages_history
-    )
-
-    return response.choices[0].message.content.strip()
+    try:
+        response = openai.ChatCompletion.create(
+            model=GPT_CHAT_MODEL,
+            temperature=0.7,
+            top_p=0.9,
+            max_tokens=MAX_TOKENS,
+            messages=messages_history
+        )
+        return response.choices[0].message.content.strip()
+    except openai.error.RateLimitError:
+        return "OpenAI API rate limit exceeded! Please try again later."
+    except Exception as e:
+        return f"OpenAI API error: {e}"
 
 
 async def chatgpt_completion_request(prompt):
     tokens = OPENAI_MAX_TOKENS // 2 - len(prompt.split())
-    response = openai.Completion.create(
-        model=GPT_COMPLETION_MODEL,
-        prompt=prompt,
-        temperature=0.7,
-        max_tokens=tokens,
-        top_p=0.9
-    )
-
-    return response.choices[0].text.strip()
+    try:
+        response = openai.Completion.create(
+            model=GPT_COMPLETION_MODEL,
+            prompt=prompt,
+            temperature=0.7,
+            max_tokens=tokens,
+            top_p=0.9
+        )
+        return response.choices[0].text.strip()
+    except openai.error.RateLimitError:
+        return "OpenAI API rate limit exceeded! Please try again later."
+    except Exception as e:
+        return f"OpenAI API error: {e}"
 
 
 if __name__ == "__main__":
