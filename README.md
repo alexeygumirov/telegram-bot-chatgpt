@@ -20,9 +20,6 @@ Bot supports:
 - GPT_CHAT_MODEL: Which GPT model is going to be used for chat completion.
     - To get list of models look into the documentation: [OpenAI documentation](https://platform.openai.com/docs/api-reference/models/list)
     - Default model: "gpt-3.5-turbo".
-- GPT_COMPLETION_MODEL: Which GPT model is going to be used for text completion.
-    - To get list of models look into the documentation: [OpenAI documentation](https://platform.openai.com/docs/api-reference/models/list)
-    - Default model: "text-davinci-003".
 - ALLOWED_CHAT_IDS: Comma separated list of allowed account IDs.
     - When no parameter is defined, then bot operated as public.
     - When list of account IDs is given, bot communicates only with them.
@@ -62,4 +59,3 @@ Bot supports:
 - **/newtopic**: Clear ChatGPT conversation history
 - **/regen**: Regenerate ChatGPT response on the last query
 - **/web `<query>`**: Search with Duckduckgo and process results with ChatGPT using `<query>`
-- **/webregen**: Regenerate GPT response on the last web search
