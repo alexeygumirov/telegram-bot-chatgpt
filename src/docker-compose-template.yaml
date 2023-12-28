@@ -10,7 +10,6 @@ services:
       - TELEGRAM_API_TOKEN=your_telegram_api_token
       - OPENAI_API_KEY=your_chatgpt_api_key
       - GPT_CHAT_MODEL=gpt-3.5-turbo
-      - GPT_COMPLETION_MODEL=text-davinci-003
       - ALLOWED_CHAT_IDS=784225869,759334828 # comma separated list, no spaces
       - MAX_TOKENS=500
       - CHAT_HISTORY_SIZE=20 # maximum allowed value is 50
