@@ -18,6 +18,12 @@ class Parametrize():
         self.allowed_chat_ids = []
         self.is_public = True
 
+        try:
+            with open("VERSION", "r") as f:
+                self.version = f.read().strip()
+        except FileNotFoundError:
+            self.version = "unknown"
+
     def read_environment(self):
 
         # Load environment variables

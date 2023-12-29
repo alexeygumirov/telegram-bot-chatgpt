@@ -7,7 +7,6 @@ import openai
 import lib.duckduckgo as DDG
 import lib.utils
 
-VERSION = "v3.0.3"
 # Load environment variables
 params = lib.utils.Parametrize()
 params.read_environment()
@@ -113,7 +112,7 @@ async def info_command(message: types.Message):
     """
     if not await is_allowed(message.from_user.id):
         return  # Ignore the message if the user is not allowed
-    info_text = f"I'm a ChatGPT bot.\nI am using {params.gpt_chat_model}.\nI can respond to your messages and a few basic commands.\nVersion: {VERSION}"
+    info_text = f"I'm a ChatGPT bot.\nI am using {params.gpt_chat_model}.\nI can respond to your messages and a few basic commands.\nVersion: {params.version}"
     await message.answer(info_text)
 
 
