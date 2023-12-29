@@ -1,7 +1,8 @@
 # telegram-bot-chatgpt
 
 My telegram bot for ChatGPT (written with the help of ChatGPT)
-Bot is written in Python and is tested with the Python 3.10. 
+Bot is written in Python and is tested with the Python 3.10 and Python 3.11.
+Dockerfile uses **Python:3.11-slim** base image.
 
 Bot supports:
 - Chat mode via GPT Chat Completion API
