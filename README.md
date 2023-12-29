@@ -38,17 +38,31 @@ Bot supports:
 
 ### Requirements
 
-- Docker
-- Docker-compose
+- Docker (or Podman, but do symlink `docker` to `podman`)
+- Docker-compose (or Podman-compose, but do symlink `docker-compose` to `podman-compose`)
 
 ### Instructions
 
 1. Clone repository
 2. Enter into the `src` directory.
+3. Build image using `make build` or `make build-latest` commands.
+    - `make build` builds image with tag `telegram-bot:$(VERSION)`.
+    - `make build-latest` builds image with tag `telegram-bot:latest` and with `telegram-bot:$(VERSION)`.
 3. Copy `docker-compose-template.yaml` to `docker-compose.yaml` in this directory.
 4. In the `docker-compose.yaml` file set values for: TELEGRAM_API_TOKEN and CHATGPT_API_KEY. If you want private bot, also provide list of comma separated account IDs.
 5. Check that your docker-compose file is correct: `docker-compose config`.
 6. If no errors are found, run in the same directory: `docker-compose up -d`.
+
+## `make` commands
+
+Makefile contains following commands:
+- `build`: Build image with tag `telegram-bot:$(VERSION)`.
+- `build-latest`: Build image with tag `telegram-bot:latest` and with `telegram-bot:$(VERSION)`.
+- `install-requirments`: Creates Python virtual environment and installs requirements for running bot.
+- `install-dev-requirments`: Creates Python virtual environment and installs requirements for running bot and python linter and LSP server.
+- `clean-enviroment`: Removes Python virtual environment and `__pycache__` directories.
+- `clean-docker`: Removes built docker images: `telegram-bot:$(VERSION)` and `telegram-bot:latest`.
+- `clean-all`: `clean-enviroment` and `clean-docker` and removes source Docker image used by the Dockerfile.
 
 ## Bot commands
 
