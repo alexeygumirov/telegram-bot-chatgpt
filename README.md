@@ -1,3 +1,13 @@
+# 👋 THIS REPOSITORY HAS MOVED! 👋
+
+**This repository is no longer actively maintained on GitHub.**
+
+Please update your bookmarks and remotes to the new home on Codeberg:
+
+➡️ **[https://codeberg.org/alexeygumirov/telegram-bot-chatgpt](https://codeberg.org/alexeygumirov/telegram-bot-chatgpt)** ⬅️
+
+Thank you for your understanding!
+
 # telegram-bot-chatgpt
 
 My telegram bot for ChatGPT (written with the help of ChatGPT)
